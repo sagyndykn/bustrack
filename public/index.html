@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BusTrack Алматы</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <div>BusTrack<span class="logo-sub">Алматы</span></div>
+    </div>
+    <div class="hdr-right">
+      <div id="user-chip"></div>
+      <button class="logout-btn" id="lout" onclick="logout()">Выйти</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="nav">
+        <button class="nav-btn active" onclick="showPanel('login')">Вход</button>
+        <button class="nav-btn" onclick="showPanel('buses')">Автобусы</button>
+        <button class="nav-btn" onclick="showPanel('stops')">Остановки</button>
+        <!-- ↓ только для admin ↓ -->
+        <button class="nav-btn" id="nav-audit" style="display:none" onclick="showPanel('audit')">Аудит</button>
+        <button class="nav-btn" id="nav-analytics" style="display:none" onclick="showPanel('analytics')">H3
+          Аналитика</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="panel active" id="panel-login">
+        <div class="panel-title">Добро пожаловать</div>
+        <div class="panel-body">
+          <div class="login-card">
+            <h3>Войти в систему</h3>
+            <div><label>Логин</label><input id="iu" placeholder="admin" /></div>
+            <div><label>Пароль</label><input id="ip" type="password" placeholder="••••••••"
+                onkeydown="if(event.key==='Enter')login()" /></div>
+            <div id="lerr" class="err"></div>
+            <button class="btn btn-blue" onclick="login()">Войти →</button>
+          </div>
+          <div class="sec-lbl">Быстрый вход</div>
+          <div class="quick-grid">
+            <button class="qb qb1" onclick="ql('admin','admin123')">Admin</button>
+            <button class="qb qb2" onclick="ql('user1','user123')">User</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUSES -->
+      <div class="panel" id="panel-buses">
+        <div class="panel-title">🚌 <span>Автобусы</span></div>
+        <div class="panel-body">
+          <div class="add-form" id="bus-form" style="display:none">
+            <h4>➕ Добавить автобус</h4>
+            <input id="b-plate" placeholder="Номер (010 ABC 01)" />
+            <input id="b-model" placeholder="Модель (Yutong ZK6180)" />
+            <input id="b-cap" placeholder="Вместимость" type="number" />
+            <input id="b-lat" placeholder="Широта (43.25...)" type="number" step="any" />
+            <input id="b-lng" placeholder="Долгота (76.94...)" type="number" step="any" />
+            <button class="btn" style="background:#f0fdfa;color:#0d9488;border:2px solid #99f6e4;font-size:12px"
+              onclick="pickCoords('bus')">📍 Выбрать на карте</button>
+            <button class="btn btn-blue" onclick="addBus()">Добавить</button>
+          </div>
+          <div id="buses-list">
+            <div class="no-data">Сначала войдите</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STOPS -->
+      <div class="panel" id="panel-stops">
+        <div class="panel-title">📍 <span>Остановки</span></div>
+        <div class="panel-body">
+          <div class="add-form" id="stop-form" style="display:none">
+            <h4>➕ Добавить остановку</h4>
+            <input id="s-name" placeholder="Название" />
+            <input id="s-addr" placeholder="Адрес" />
+            <input id="s-lat" placeholder="Широта (43.25...)" type="number" step="any" />
+            <input id="s-lng" placeholder="Долгота (76.94...)" type="number" step="any" />
+            <button class="btn" style="background:#f0fdfa;color:#0d9488;border:2px solid #99f6e4;font-size:12px"
+              onclick="pickCoords('stop')">📍 Выбрать на карте</button>
+            <button class="btn btn-blue" onclick="addStop()">Добавить</button>
+          </div>
+          <div id="stops-list">
+            <div class="no-data">Сначала войдите</div>
+          </div>
+        </div>
+        <div id="nearby-panel">
+          <div class="nearby-title">Ближайшие автобусы (H3)</div>
+          <div id="nmeta" class="nearby-meta"></div>
+          <div id="nlist"></div>
+        </div>
+      </div>
+
+      <!-- AUDIT (только admin) -->
+      <div class="panel" id="panel-audit">
+        <div class="panel-title"><span>Аудит лог</span></div>
+        <div class="panel-body" id="audit-list">
+          <div class="no-data">Только для admin</div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS (только admin) -->
+      <div class="panel" id="panel-analytics">
+        <div class="panel-title"><span>H3 Аналитика</span></div>
+        <div class="panel-body">
+          <button class="btn btn-blue" onclick="refreshAnalytics()">🔄 Обновить данные</button>
+          <div id="analytics-list">
+            <div class="no-data">Нажмите «Обновить данные»</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <div id="map"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/script.js"></script>
+</body>
+
+</html>
