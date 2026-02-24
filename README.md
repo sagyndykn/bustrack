@@ -1,4 +1,4 @@
-# BusTrack — Institutional Bus Tracking System
+# BusTrack — Bus Tracking System
 
 A real-time urban transportation tracking system for the city of Almaty, built as an institutional information system with role-based access control and H3 spatial indexing.
 
